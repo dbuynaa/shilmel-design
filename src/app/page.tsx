@@ -14,16 +14,6 @@ export default function Home() {
     { icon: "🦺", label: "Дэгжин хэрэгсэл" },
   ];
 
-  const products = [
-    {
-      id: 1,
-      name: "T1 Navy Shirt T.B Ти-1 хар",
-      price: "96,000₮",
-      image: "/placeholder.svg",
-    },
-    // Repeat similar products...
-  ];
-
   return (
     <div className="bg-pink-50/30">
       <section className="container mx-auto px-4 py-12">
