@@ -10,6 +10,7 @@ export const env = createEnv({
     DATABASE_URL: z.string().url(),
     DATABASE_PRISMA_URL: z.string().url(),
     DATABASE_URL_NON_POOLING: z.string().url(),
+    BLOB_READ_WRITE_TOKEN: z.string(),
     AUTH_SECRET:
       process.env.NODE_ENV === "production"
         ? z.string()
@@ -42,6 +43,7 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     DATABASE_URL_NON_POOLING: process.env.DATABASE_URL_NON_POOLING,
     DATABASE_PRISMA_URL: process.env.DATABASE_PRISMA_URL,
+    BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
     NODE_ENV: process.env.NODE_ENV,
   },
   /**

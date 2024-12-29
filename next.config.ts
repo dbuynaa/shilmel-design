@@ -15,7 +15,18 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
-    remotePatterns: [{ hostname: "*.blob.vercel-storage.com" }],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "my-blob-store.public.blob.vercel-storage.com",
+        port: "",
+      },
+      {
+        protocol: "https",
+        hostname: "ytnv6xxemstkzalq.public.blob.vercel-storage.com",
+        port: "",
+      },
+    ],
     formats: ["image/avif", "image/webp"],
   },
   transpilePackages: ["next-mdx-remote", "commerce-kit"],
