@@ -1,69 +1,140 @@
-import Link from "next/link";
+import Image from 'next/image'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
-import { LatestPost } from "@/app/_components/post";
-import { auth } from "@/server/auth";
-import { api, HydrateClient } from "@/trpc/server";
+export default function Home() {
+  const categories = [
+    { icon: "🏢", label: "Ажлын хувцас" },
+    { icon: "👔", label: "Өрөөс хувцас" },
+    { icon: "👕", label: "Пальто" },
+    { icon: "🧥", label: "Хантааз" },
+    { icon: "👖", label: "Нэхий хувцас" },
+    { icon: "🦺", label: "Дэгжин хэрэгсэл" }
+  ]
 
-export default async function Home() {
-  const hello = await api.post.hello({ text: "from tRPC" });
-  const session = await auth();
-
-  if (session?.user) {
-    void api.post.getLatest.prefetch();
-  }
+  const products = [
+    {
+      id: 1,
+      name: "T1 Navy Shirt T.B Ти-1 хар",
+      price: "96,000₮",
+      image: "/placeholder.svg"
+    },
+    // Repeat similar products...
+  ]
 
   return (
-    <HydrateClient>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-            Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
-          </h1>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/usage/first-steps"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">First Steps →</h3>
-              <div className="text-lg">
-                Just the basics - Everything you need to know to set up your
-                database and authentication.
-              </div>
-            </Link>
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/introduction"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">Documentation →</h3>
-              <div className="text-lg">
-                Learn more about Create T3 App, the libraries it uses, and how
-                to deploy it.
-              </div>
-            </Link>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-2xl text-white">
-              {hello ? hello.greeting : "Loading tRPC query..."}
+    <div className="bg-pink-50/30">
+      <section className="container mx-auto px-4 py-12">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <h1 className="text-3xl font-bold mb-4">Захиалгат хувцас,<br/>Дэгжин байдал</h1>
+            <p className="text-gray-600 mb-6">
+              Ажлын хувцасны төрөл бүрийн загвар, өнгө үйлдвэрлэл хийж байна
             </p>
-
-            <div className="flex flex-col items-center justify-center gap-4">
-              <p className="text-center text-2xl text-white">
-                {session && <span>Logged in as {session.user?.name}</span>}
-              </p>
-              <Link
-                href={session ? "/api/auth/signout" : "/api/auth/signin"}
-                className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
-              >
-                {session ? "Sign out" : "Sign in"}
-              </Link>
+            <Button className="bg-pink-600 hover:bg-pink-700">
+              Захиалах өдөр
+            </Button>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white rounded-full p-4 aspect-square flex items-center justify-center">
+              <Image
+                src="/icons/safety.svg"
+                alt="Safety Icon"
+                width={40}
+                height={40}
+                className="opacity-60"
+              />
+            </div>
+            <div className="row-span-2 rounded-[2rem] overflow-hidden">
+              <Image
+                src="/placeholder.svg"
+                alt="Model"
+                width={300}
+                height={400}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="bg-pink-200 rounded-full p-4 aspect-square flex items-center justify-center">
+              <Image
+                src="/icons/helmet.svg"
+                alt="Helmet Icon"
+                width={40}
+                height={40}
+                className="opacity-60"
+              />
+            </div>
+            <div className="row-span-2 rounded-[2rem] overflow-hidden">
+              <Image
+                src="/placeholder.svg"
+                alt="Safety Wear"
+                width={300}
+                height={400}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="bg-pink-100 rounded-full p-4 aspect-square flex items-center justify-center">
+              <Image
+                src="/icons/jacket.svg"
+                alt="Jacket Icon"
+                width={40}
+                height={40}
+                className="opacity-60"
+              />
             </div>
           </div>
-
-          {session?.user && <LatestPost />}
         </div>
-      </main>
-    </HydrateClient>
-  );
+      </section>
+
+      <section className="container mx-auto px-4 py-12">
+        <h2 className="text-xl font-semibold mb-6">Ангилал</h2>
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+          {categories.map((category, index) => (
+            <Link 
+              key={index} 
+              href={`/category/${index}`}
+              className="flex flex-col items-center gap-2 p-4 rounded-full border bg-white hover:border-pink-200 transition-colors"
+            >
+              <span className="text-2xl">{category.icon}</span>
+              <span className="text-sm text-center">{category.label}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="container mx-auto px-4 py-12">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold">Ажлын хувцас</h2>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm">
+              Үнэ
+            </Button>
+            <Button variant="outline" size="sm">
+              Хэмжээ
+            </Button>
+            <Button variant="outline" size="sm">
+              Өнгө
+            </Button>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <Link key={i} href={`/products/${i}`} className="group">
+              <div className="aspect-square mb-4 bg-white rounded-lg overflow-hidden">
+                <Image
+                  src="/placeholder.svg"
+                  alt="Product"
+                  width={300}
+                  height={300}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                />
+              </div>
+              <h3 className="font-medium text-sm mb-2">T1 Navy Shirt T.B Ти-1 хар</h3>
+              <p className="font-semibold">96,000₮</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+    </div>
+  )
 }
+
