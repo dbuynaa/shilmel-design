@@ -1,22 +1,17 @@
-import { Inter } from "next/font/google";
-import "../../styles/globals.css";
-import Footer from "@/components/Footer";
-import Header from "@/components/Header";
+import '../../styles/globals.css';
+import Footer from './_components/Footer';
+import Header from './_components/Header';
 
-const inter = Inter({ subsets: ["latin"] });
-
-export default function RootLayout({
+export default function MainLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="mn">
-      <body className={inter.className}>
-        <Header />
-        {children}
-        <Footer />
-      </body>
-    </html>
+    <>
+      <Header />
+      <main className="container mx-auto px-4">{children}</main>
+      <Footer />
+    </>
   );
 }

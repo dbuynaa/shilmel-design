@@ -1,15 +1,16 @@
-import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { z } from 'zod';
+import { createTRPCRouter, publicProcedure } from '../trpc';
+import {
+  createProductSchema,
+  getProductsSchema,
+  updateProductSchema,
+  deleteProductSchema,
+} from '@/lib/schemas';
+import { TRPCError } from '@trpc/server';
 
 export const productRouter = createTRPCRouter({
   getAll: publicProcedure
-    .input(
-      z.object({
-        categoryId: z.string().optional(),
-        limit: z.number().min(1).max(100).default(50),
-        cursor: z.string().nullish(),
-      }),
-    )
+    .input(getProductsSchema)
     .query(async ({ ctx, input }) => {
       const items = await ctx.db.product.findMany({
         take: input.limit + 1,
@@ -19,7 +20,7 @@ export const productRouter = createTRPCRouter({
           category: true,
         },
         orderBy: {
-          createdAt: "desc",
+          createdAt: 'desc',
         },
       });
 
@@ -43,4 +44,94 @@ export const productRouter = createTRPCRouter({
       },
     });
   }),
+
+  create: publicProcedure
+    .input(createProductSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { categoryId, ...rest } = input;
+
+      console.log('categoryId ==', categoryId);
+
+      // Check if category exists
+      const category = await ctx.db.category.findUnique({
+        where: { id: categoryId },
+      });
+
+      if (!category) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `Category with ID ${categoryId} not found`,
+        });
+      }
+
+      return ctx.db.product.create({
+        data: {
+          ...rest,
+          category: {
+            connect: { id: categoryId },
+          },
+        },
+      });
+    }),
+
+  update: publicProcedure
+    .input(updateProductSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { id, categoryId, ...rest } = input;
+
+      const product = await ctx.db.product.findUnique({
+        where: { id },
+      });
+
+      if (!product) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `Product with ID ${id} not found`,
+        });
+      }
+
+      if (categoryId) {
+        const category = await ctx.db.category.findUnique({
+          where: { id: categoryId },
+        });
+
+        if (!category) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: `Category with ID ${categoryId} not found`,
+          });
+        }
+      }
+
+      return ctx.db.product.update({
+        where: { id },
+        data: {
+          ...rest,
+          ...(categoryId && {
+            category: {
+              connect: { id: categoryId },
+            },
+          }),
+        },
+      });
+    }),
+
+  delete: publicProcedure
+    .input(deleteProductSchema)
+    .mutation(async ({ ctx, input }) => {
+      const product = await ctx.db.product.findUnique({
+        where: { id: input.id },
+      });
+
+      if (!product) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `Product with ID ${input.id} not found`,
+        });
+      }
+
+      return ctx.db.product.delete({
+        where: { id: input.id },
+      });
+    }),
 });

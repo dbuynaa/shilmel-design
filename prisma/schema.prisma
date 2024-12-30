@@ -56,10 +56,17 @@ model User {
     name          String?
     email         String?   @unique
     emailVerified DateTime?
+    password      String
+    role          UserRole  @default(USER)
     image         String?
     accounts      Account[]
     sessions      Session[]
     posts         Post[]
+}
+
+enum UserRole {
+    USER
+    ADMIN
 }
 
 model VerificationToken {
@@ -75,6 +82,7 @@ model Product {
     name        String
     description String?
     price       Int
+    discount    Int?
     images      String[]
     sizes       String[]
     colors      Json[]
@@ -88,7 +96,7 @@ model Product {
 
 model Category {
     id       String    @id @default(cuid())
-    name     String
+    name     String    @unique
     icon     String
     products Product[]
 }
