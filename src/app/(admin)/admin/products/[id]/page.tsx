@@ -42,7 +42,7 @@ export default function ProductForm({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const { data: categories } = api.category.getAll.useQuery();
-
+  const utils = api.useUtils();
   const resolvedParams = use(params);
   const isEditMode = resolvedParams.id !== 'new';
 
@@ -85,6 +85,7 @@ export default function ProductForm({
         : await createProductAction(data);
 
       if (result.success) {
+        utils.product.getAll.invalidate();
         toast({
           title: `Бүтээгдэхүүн амжилттай ${isEditMode ? 'шинэчлэгдлээ' : 'үүсгэгдлээ'}.`,
           description: result.message,

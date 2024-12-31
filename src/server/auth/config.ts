@@ -25,6 +25,7 @@ declare module 'next-auth' {
   interface User {
     role: UserRole;
     email?: string | null;
+    name?: string | null;
     image?: string | null;
   }
 }
@@ -32,6 +33,7 @@ declare module 'next-auth/jwt' {
   interface JWT extends DefaultJWT {
     role: UserRole;
     email: string;
+    name: string;
     image: string | null;
   }
 }
@@ -75,7 +77,7 @@ export const authConfig: NextAuthConfig = {
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.name = user.name;
+        token.name = user.name ?? '';
         token.email = user.email ?? '';
         token.image = user.image ?? null;
         token.role = user.role;
@@ -123,6 +125,8 @@ export const authConfig: NextAuthConfig = {
         return {
           id: user.id,
           email: user.email,
+          name: user.name,
+          image: user.image,
           role: user.role,
         };
       },

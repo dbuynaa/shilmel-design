@@ -20,7 +20,7 @@ export const productRouter = createTRPCRouter({
           category: true,
         },
         orderBy: {
-          createdAt: 'desc',
+          createdAt: input.orderby,
         },
       });
 

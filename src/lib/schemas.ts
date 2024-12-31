@@ -15,6 +15,7 @@ export type LoginSchema = z.infer<typeof loginSchema>;
 export const getProductsSchema = z.object({
   categoryId: z.string().optional(),
   limit: z.number().min(1).max(100).default(50),
+  orderby: z.enum(['asc', 'desc']).default('desc'),
   cursor: z.string().nullish(),
 });
 

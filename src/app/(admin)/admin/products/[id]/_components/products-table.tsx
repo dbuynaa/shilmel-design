@@ -25,6 +25,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/trpc/react';
 
 interface ProductsTableProps {
   products?: Product[];
@@ -38,9 +39,12 @@ export function ProductsTable({
   priceSort,
 }: ProductsTableProps) {
   const { toast } = useToast();
-
+  const utils = api.useUtils();
   const handleDelete = async (id: string) => {
     const result = await deleteProduct(id);
+    if (result.success) {
+      utils.product.getAll.invalidate();
+    }
     toast({
       title: result.success ? 'Success' : 'Error',
       description: result.message,

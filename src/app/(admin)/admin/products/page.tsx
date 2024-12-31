@@ -8,24 +8,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { ProductsTable } from './[id]/_components/products-table';
 import { api } from '@/trpc/react';
 import { useCallback, useState } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { DatePickerWithRange } from '@/components/date-picker-with-range';
 
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [priceSort, setPriceSort] = useState<string>('all');
-  const [dateRange, setDateRange] = useState<string>('');
 
-  const { data: categories, isLoading: loadingCategories } =
-    api.category.getAll.useQuery();
+  const { data: categories } = api.category.getAll.useQuery();
   const { data: products, isLoading: loadingProducts } =
     api.product.getAll.useQuery({
       limit: 50,
+      orderby: 'desc',
       categoryId: selectedCategory === 'all' ? undefined : selectedCategory,
     });
 
@@ -36,20 +34,6 @@ export default function ProductsPage() {
   const handlePriceSortChange = useCallback((value: string) => {
     setPriceSort(value);
   }, []);
-
-  if (loadingCategories) {
-    return (
-      <div className="space-y-4 p-6">
-        <Skeleton className="h-8 w-32" />
-        <div className="flex gap-4">
-          <Skeleton className="h-10 w-[180px]" />
-          <Skeleton className="h-10 w-[180px]" />
-          <Skeleton className="h-10 w-[200px]" />
-        </div>
-        <Skeleton className="h-[400px] w-full" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 p-6">
@@ -89,12 +73,7 @@ export default function ProductsPage() {
           </SelectContent>
         </Select>
 
-        <Input
-          placeholder="2024.09.12 - 2024.09.14"
-          className="w-[200px]"
-          value={dateRange}
-          onChange={(e) => setDateRange(e.target.value)}
-        />
+        <DatePickerWithRange className="w-[200px]" />
       </div>
 
       <ProductsTable

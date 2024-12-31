@@ -4,11 +4,17 @@ import Link from 'next/link';
 import { Heart, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { useSession } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { UserRole } from '@prisma/client';
 import { LoginModal } from '@/components/login-modal';
 import { FilterDialog } from '@/components/filter-dialog';
-import { UserNav } from '@/components/user-nav';
+// import { UserNav } from '@/components/user-nav';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 
 export default function Header() {
   const { data: session } = useSession();
@@ -37,12 +43,34 @@ export default function Header() {
           <Link href="/cart" className="p-2 hover:text-pink-600">
             <ShoppingCart className="h-5 w-5" />
           </Link>
+          {/* {session?.user && <UserNav />} */}
           {isAdmin && (
             <Button variant="default" size="sm" asChild>
               <Link href="/admin/dashboard">Админ</Link>
             </Button>
           )}
-          {session ? <UserNav /> : <LoginModal />}
+          {session?.user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  {session.user.name?.slice(0, 2).toUpperCase()}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">Профайл</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/orders">Захиалгууд</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => signOut()}>
+                  Гарах
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <LoginModal />
+          )}
         </div>
       </div>
     </header>
