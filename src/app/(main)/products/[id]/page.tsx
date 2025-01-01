@@ -1,216 +1,115 @@
-"use client";
+import { Heart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { ProductImageGallery } from '../_components/product_image_gallery';
+import { RelatedProducts } from '../_components/related-products';
+import { api } from '@/trpc/server';
+import { notFound } from 'next/navigation';
 
-import { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-
-interface ProductImage {
-  src: string;
-  alt: string;
+interface ProductPageProps {
+  params: {
+    id: string;
+  };
 }
 
-export default function ProductPage() {
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState("L");
+export default async function ProductPage({ params }: ProductPageProps) {
+  const product = await api.product.getById(params.id);
 
-  const images: ProductImage[] = [
-    { src: "/placeholder.svg", alt: "Product front view" },
-    { src: "/placeholder.svg", alt: "Product side view" },
-    { src: "/placeholder.svg", alt: "Product back view" },
-    { src: "/placeholder.svg", alt: "Product detail view" },
-    { src: "/placeholder.svg", alt: "Product wearing view" },
-  ];
+  if (!product) {
+    notFound();
+  }
 
-  const sizes = ["4XL", "XXL", "XL", "L", "M"];
-  const colors = [
-    { name: "Yellow/Black", primary: "#EEFF00", secondary: "#000000" },
-    { name: "Orange/Black", primary: "#FF6B00", secondary: "#000000" },
+  const productImages = product.images?.map((image) => ({
+    src: image,
+    alt: product.name,
+  })) ?? [
+    {
+      src: '/placeholder.svg?height=600&width=600',
+      alt: product.name,
+    },
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col gap-8 lg:flex-row">
-        {/* Thumbnails */}
-        <div className="order-2 flex gap-2 lg:order-1 lg:w-24 lg:flex-col">
-          {images.map((image, i) => (
-            <button
-              key={i}
-              onClick={() => setSelectedImage(i)}
-              className={cn(
-                "relative h-20 w-20 overflow-hidden rounded-lg border",
-                selectedImage === i && "ring-2 ring-pink-600",
-              )}
-            >
-              <Image
-                src={image.src}
-                alt={image.alt}
-                fill
-                className="object-cover"
-              />
-            </button>
-          ))}
-        </div>
-
-        {/* Main Image */}
-        <div className="order-1 flex-1 lg:order-2">
-          <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
-            <Image
-              src={
-                images[selectedImage]?.src ??
-                images[0]?.src ??
-                "/placeholder.svg"
-              }
-              alt={images[selectedImage]?.alt ?? "Product image"}
-              fill
-              className="object-cover"
-              priority
-            />
+    <div className="container mx-auto px-[5%] py-8">
+      <div className="mb-12 grid gap-8 lg:grid-cols-2">
+        <ProductImageGallery images={productImages} />
+        <div className="space-y-6">
+          <div>
+            <p className="mb-2 text-sm text-muted-foreground">
+              Product code: #{product.id}
+            </p>
+            <h1 className="mb-4 text-3xl font-bold">{product.name}</h1>
+            <p className="text-2xl font-semibold">{product.price}₮</p>
           </div>
-        </div>
 
-        {/* Product Info */}
-        <div className="order-3 lg:w-80">
-          <div className="space-y-6">
-            <div>
-              <div className="mb-1 text-sm text-gray-500">
-                Барааны код: #2524
-              </div>
-              <h1 className="text-xl font-medium">Blue Winter Bomber Jacket</h1>
-              <div className="mt-2 text-2xl font-semibold">49,900 ₮</div>
-            </div>
-
-            <div className="space-y-4">
+          <div className="space-y-4">
+            {product.colors && product.colors.length > 0 && (
               <div>
-                <label className="mb-2 block text-sm font-medium">
-                  Өнгө (2)
-                </label>
+                <h3 className="mb-3 font-medium">Color</h3>
                 <div className="flex gap-2">
-                  {colors.map((color, i) => (
+                  {product.colors.map((color, index) => (
                     <button
-                      key={i}
-                      className="relative h-12 w-12 overflow-hidden rounded border"
+                      key={index}
+                      className={`h-12 w-12 overflow-hidden rounded border ${
+                        index === 0 ? 'border-2 border-primary' : ''
+                      }`}
                     >
                       <div
-                        className="absolute inset-0"
-                        style={{
-                          background: `linear-gradient(135deg, ${color.primary} 50%, ${color.secondary} 50%)`,
-                        }}
+                        style={{ backgroundColor: color as string }}
+                        className="h-full w-full"
                       />
                     </button>
                   ))}
                 </div>
               </div>
+            )}
 
+            {product.sizes && product.sizes.length > 0 && (
               <div>
-                <label className="mb-2 block text-sm font-medium">
-                  Хэмжээ (5)
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {sizes.map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={cn(
-                        "rounded border px-3 py-1 text-sm",
-                        selectedSize === size
-                          ? "border-pink-600 bg-pink-50 text-pink-600"
-                          : "border-gray-200 hover:border-gray-300",
-                      )}
-                    >
-                      {size}
-                    </button>
+                <h3 className="mb-3 font-medium">Size</h3>
+                <RadioGroup
+                  defaultValue={product.sizes[0]}
+                  className="flex flex-wrap gap-2"
+                >
+                  {product.sizes.map((size) => (
+                    <div key={size}>
+                      <RadioGroupItem
+                        value={size.toLowerCase()}
+                        id={`size-${size.toLowerCase()}`}
+                        className="peer hidden"
+                      />
+                      <Label
+                        htmlFor={`size-${size.toLowerCase()}`}
+                        className="flex h-10 w-10 cursor-pointer items-center justify-center rounded border peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10"
+                      >
+                        {size}
+                      </Label>
+                    </div>
                   ))}
-                </div>
+                </RadioGroup>
               </div>
-            </div>
+            )}
+          </div>
 
-            <div className="space-y-2">
-              <Button className="w-full bg-pink-600 hover:bg-pink-700">
-                Сагсанд хийх
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"
-              >
-                Худалдаж авах
-              </Button>
-            </div>
+          <div className="flex gap-4">
+            <Button className="flex-1">Add to cart</Button>
+            <Button variant="outline" size="icon">
+              <Heart className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="border-t pt-6">
+            <h3 className="mb-4 font-semibold">Product Details</h3>
+            <p className="text-muted-foreground">{product.description}</p>
           </div>
         </div>
       </div>
 
-      {/* Product Details */}
-      <div className="mt-16 space-y-8">
-        <div className="grid gap-8">
-          <Image
-            src="/placeholder.svg"
-            alt="Product usage example"
-            width={800}
-            height={400}
-            className="w-full rounded-lg"
-          />
-          <Image
-            src="/placeholder.svg"
-            alt="Product features"
-            width={800}
-            height={400}
-            className="w-full rounded-lg"
-          />
-        </div>
-
-        {/* Size Chart */}
-        <div>
-          <h2 className="mb-4 text-xl font-medium">Хэмжээний хүснэгт</h2>
-          <div className="overflow-hidden rounded-lg border">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2 text-left">Size</th>
-                  <th className="px-4 py-2 text-left">Chest</th>
-                  <th className="px-4 py-2 text-left">Length</th>
-                  <th className="px-4 py-2 text-left">Sleeve</th>
-                </tr>
-              </thead>
-              <tbody>
-                {["S", "M", "L", "XL", "2XL"].map((size) => (
-                  <tr key={size} className="border-t">
-                    <td className="px-4 py-2">{size}</td>
-                    <td className="px-4 py-2">00</td>
-                    <td className="px-4 py-2">00</td>
-                    <td className="px-4 py-2">00</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Related Products */}
-        <div>
-          <h2 className="mb-6 text-xl font-medium">Төстэй бараанууд</h2>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Link key={i} href={`/products/${i + 1}`} className="group">
-                <div className="mb-2 aspect-square overflow-hidden rounded-lg bg-gray-100">
-                  <Image
-                    src="/placeholder.svg"
-                    alt="Related product"
-                    width={200}
-                    height={200}
-                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                  />
-                </div>
-                <h3 className="text-sm font-medium">
-                  T1 Navy Shirt T.B Ти-1 хар
-                </h3>
-                <p className="mt-1 text-sm font-semibold">96,000 ₮</p>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
+      <RelatedProducts
+        categoryId={product.categoryId}
+        currentProductId={product.id}
+      />
     </div>
   );
 }

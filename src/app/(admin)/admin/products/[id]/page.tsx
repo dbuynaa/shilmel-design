@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
@@ -108,15 +108,58 @@ export default function ProductForm({
     }
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      const newImages = Array.from(files).map((file) =>
-        URL.createObjectURL(file),
-      );
-      setSelectedImages((prev) => [...prev, ...newImages]);
-      form.setValue('images', [...form.getValues('images'), ...newImages]);
+    if (!files?.length) return;
+
+    try {
+      setIsLoading(true);
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(
+          `/api/upload?filename=${encodeURIComponent(file.name)}`,
+          {
+            method: 'POST',
+            body: file,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to upload image');
+        }
+
+        const data = await response.json();
+        return data.url;
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+      setSelectedImages((prev) => [...prev, ...uploadedUrls]);
+      form.setValue('images', [...form.getValues('images'), ...uploadedUrls]);
+
+      toast({
+        title: 'Success',
+        description: 'Images uploaded successfully',
+      });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to upload images',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+    form.setValue(
+      'images',
+      form.getValues('images').filter((_, i) => i !== index),
+    );
   };
 
   return (
@@ -298,7 +341,7 @@ export default function ProductForm({
                   {selectedImages.map((image, index) => (
                     <div
                       key={index}
-                      className="relative aspect-square rounded-lg border bg-muted"
+                      className="group relative aspect-square rounded-lg border bg-muted"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -306,6 +349,13 @@ export default function ProductForm({
                         alt={`Бүтээгдэхүүн ${index + 1}`}
                         className="h-full w-full rounded-lg object-cover"
                       />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(index)}
+                        className="absolute right-1 top-1 hidden rounded-full bg-destructive p-1 text-white group-hover:block"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </div>
                   ))}
                   <FormControl>
@@ -317,18 +367,26 @@ export default function ProductForm({
                         className="hidden"
                         onChange={handleImageUpload}
                         id="image-upload"
+                        disabled={isLoading}
                       />
                       <label
                         htmlFor="image-upload"
                         className={cn(
                           'flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed',
                           'hover:bg-muted/50',
+                          isLoading && 'cursor-not-allowed opacity-50',
                         )}
                       >
-                        <Plus className="h-8 w-8 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                          Зураг нэмэх
-                        </span>
+                        {isLoading ? (
+                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        ) : (
+                          <>
+                            <Plus className="h-8 w-8 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">
+                              Зураг нэмэх
+                            </span>
+                          </>
+                        )}
                       </label>
                     </div>
                   </FormControl>
