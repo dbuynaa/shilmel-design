@@ -16,7 +16,7 @@ export default async function RootLayout({
   const session = await auth();
   return (
     <html lang="mn">
-      <body className={inter.className}>
+      <body suppressHydrationWarning className={inter.className}>
         <TRPCReactProvider>
           <SessionProvider session={session}>
             <NextTopLoader color="hsl(var(--primary))" showSpinner={false} />

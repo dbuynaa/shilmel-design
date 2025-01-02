@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { z } from 'zod';
+import { createTRPCRouter, protectedProcedure } from '../trpc';
 
 export const cartRouter = createTRPCRouter({
   get: protectedProcedure.query(async ({ ctx }) => {
@@ -79,6 +79,20 @@ export const cartRouter = createTRPCRouter({
           size: input.size,
           color: input.color,
         },
+      });
+    }),
+
+  updateItemQuantity: protectedProcedure
+    .input(
+      z.object({
+        itemId: z.string(),
+        quantity: z.number().min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.cartItem.update({
+        where: { id: input.itemId },
+        data: { quantity: input.quantity },
       });
     }),
 

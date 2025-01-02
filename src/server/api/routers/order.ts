@@ -1,5 +1,6 @@
-import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { z } from 'zod';
+import { createTRPCRouter, protectedProcedure, adminProcedure } from '../trpc';
+import { OrderStatus } from '@prisma/client';
 
 export const orderRouter = createTRPCRouter({
   create: protectedProcedure
@@ -25,7 +26,7 @@ export const orderRouter = createTRPCRouter({
       });
 
       if (!cart || cart.items.length === 0) {
-        throw new Error("Cart is empty");
+        throw new Error('Cart is empty');
       }
 
       const totalAmount = cart.items.reduce(
@@ -35,14 +36,16 @@ export const orderRouter = createTRPCRouter({
 
       const order = await ctx.db.order.create({
         data: {
-          userId: ctx.session.user.id,
           totalAmount,
           shippingInfo: input.shippingInfo,
+          orderedBy: {
+            connect: { id: ctx.session.user.id },
+          },
           items: {
             create: cart.items.map((item) => ({
               quantity: item.quantity,
               size: item.size,
-              color: item.color ? item.color : "",
+              color: item.color ? item.color : '',
               price: item.product.price,
               product: {
                 connect: { id: item.productId },
@@ -51,6 +54,7 @@ export const orderRouter = createTRPCRouter({
           },
         },
         include: {
+          orderedBy: true,
           items: {
             include: {
               product: true,
@@ -71,6 +75,7 @@ export const orderRouter = createTRPCRouter({
     return ctx.db.order.findMany({
       where: { userId: ctx.session.user.id },
       include: {
+        orderedBy: true,
         items: {
           include: {
             product: true,
@@ -78,7 +83,7 @@ export const orderRouter = createTRPCRouter({
         },
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: 'desc',
       },
     });
   }),
@@ -92,6 +97,7 @@ export const orderRouter = createTRPCRouter({
           userId: ctx.session.user.id,
         },
         include: {
+          orderedBy: true,
           items: {
             include: {
               product: true,
@@ -99,5 +105,48 @@ export const orderRouter = createTRPCRouter({
           },
         },
       });
+    }),
+
+  // Admin procedures
+  getAllOrders: adminProcedure
+    .input(
+      z.object({
+        status: z.nativeEnum(OrderStatus).optional(),
+        search: z.string().optional(),
+        paymentStatus: z.enum(['ALL', 'PAID', 'UNPAID']).optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const where = {
+        ...(input.status ? { status: input.status as OrderStatus } : {}),
+        ...(input.search
+          ? {
+              OR: [
+                { id: { contains: input.search } },
+                { user: { name: { contains: input.search } } },
+              ],
+            }
+          : {}),
+        ...(input.paymentStatus && input.paymentStatus !== 'ALL'
+          ? { paymentStatus: input.paymentStatus }
+          : {}),
+      };
+
+      const [orders, count] = await Promise.all([
+        ctx.db.order.findMany({
+          where,
+          include: {
+            orderedBy: true,
+            items: { include: { product: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+        ctx.db.order.count({ where }),
+      ]);
+
+      return {
+        orders,
+        count,
+      };
     }),
 });

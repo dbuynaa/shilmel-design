@@ -12,7 +12,12 @@ export default function CartPage() {
     limit: 4,
     orderby: 'desc',
   });
+
   const removeItem = api.cart.removeItem.useMutation({
+    onSuccess: () => refetchCart(),
+  });
+
+  const updateQuantity = api.cart.updateItemQuantity.useMutation({
     onSuccess: () => refetchCart(),
   });
 
@@ -21,6 +26,13 @@ export default function CartPage() {
       removeItem.mutate(itemId);
     },
     [removeItem],
+  );
+
+  const handleUpdateQuantity = useCallback(
+    (itemId: string, quantity: number) => {
+      updateQuantity.mutate({ itemId, quantity });
+    },
+    [updateQuantity],
   );
 
   const totalItems = cart?.items.length ?? 0;
@@ -49,7 +61,9 @@ export default function CartPage() {
                   quantity={item.quantity}
                   size={item.size}
                   isSelected={true}
-                  onUpdateQuantity={() => {}}
+                  onUpdateQuantity={(quantity) =>
+                    handleUpdateQuantity(item.id, quantity)
+                  }
                   onRemove={() => handleRemoveItem(item.id)}
                   onToggleSelect={() => {}}
                 />
