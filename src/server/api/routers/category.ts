@@ -11,6 +11,14 @@ export const categoryRouter = createTRPCRouter({
     return categories;
   }),
 
+  getWorkBranch: publicProcedure.query(async ({ ctx }) => {
+    return ctx.db.workBranch.findMany({
+      where: { parentId: null },
+      include: { children: true },
+      orderBy: { name: 'asc' },
+    });
+  }),
+
   getById: publicProcedure.input(z.string()).query(async ({ ctx, input }) => {
     return await ctx.db.category.findUnique({
       where: { id: input },

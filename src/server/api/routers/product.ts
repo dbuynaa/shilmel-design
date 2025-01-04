@@ -18,6 +18,7 @@ export const productRouter = createTRPCRouter({
         cursor: input.cursor ? { id: input.cursor } : undefined,
         include: {
           category: true,
+          sizes: true,
         },
         orderBy: {
           createdAt: input.orderby,
@@ -36,10 +37,23 @@ export const productRouter = createTRPCRouter({
       };
     }),
 
+  getByCategory: publicProcedure
+    .input(z.string())
+    .query(async ({ ctx, input }) => {
+      return ctx.db.product.findMany({
+        where: { categoryId: input },
+        include: {
+          category: true,
+          sizes: true,
+        },
+      });
+    }),
+
   getById: publicProcedure.input(z.string()).query(async ({ ctx, input }) => {
     return ctx.db.product.findUnique({
       where: { id: input },
       include: {
+        sizes: true,
         category: true,
       },
     });
@@ -48,11 +62,8 @@ export const productRouter = createTRPCRouter({
   create: publicProcedure
     .input(createProductSchema)
     .mutation(async ({ ctx, input }) => {
-      const { categoryId, ...rest } = input;
+      const { categoryId, colors, sizes, ...rest } = input;
 
-      console.log('categoryId ==', categoryId);
-
-      // Check if category exists
       const category = await ctx.db.category.findUnique({
         where: { id: categoryId },
       });
@@ -67,9 +78,19 @@ export const productRouter = createTRPCRouter({
       return ctx.db.product.create({
         data: {
           ...rest,
+          colors: colors || [],
           category: {
             connect: { id: categoryId },
           },
+          sizes: {
+            create: sizes.map((size) => ({
+              size: size.size,
+              stock: size.stock,
+            })),
+          },
+        },
+        include: {
+          sizes: true,
         },
       });
     }),
@@ -77,10 +98,13 @@ export const productRouter = createTRPCRouter({
   update: publicProcedure
     .input(updateProductSchema)
     .mutation(async ({ ctx, input }) => {
-      const { id, categoryId, ...rest } = input;
+      const { id, categoryId, colors, sizes, ...rest } = input;
 
       const product = await ctx.db.product.findUnique({
         where: { id },
+        include: {
+          sizes: true,
+        },
       });
 
       if (!product) {
@@ -103,15 +127,51 @@ export const productRouter = createTRPCRouter({
         }
       }
 
+      // Delete existing sizes that are not in the new sizes array
+      await ctx.db.productSize.deleteMany({
+        where: {
+          productId: id,
+          size: {
+            notIn: sizes.map((s) => s.size),
+          },
+        },
+      });
+
+      // Update or create sizes
+      const sizePromises = sizes.map((size) =>
+        ctx.db.productSize.upsert({
+          where: {
+            productId_size: {
+              productId: id,
+              size: size.size,
+            },
+          },
+          create: {
+            size: size.size,
+            stock: size.stock,
+            productId: id,
+          },
+          update: {
+            stock: size.stock,
+          },
+        }),
+      );
+
+      await Promise.all(sizePromises);
+
       return ctx.db.product.update({
         where: { id },
         data: {
           ...rest,
+          colors: colors || [],
           ...(categoryId && {
             category: {
               connect: { id: categoryId },
             },
           }),
+        },
+        include: {
+          sizes: true,
         },
       });
     }),

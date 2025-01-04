@@ -19,6 +19,11 @@ export const getProductsSchema = z.object({
   cursor: z.string().nullish(),
 });
 
+const productSizeSchema = z.object({
+  size: z.string(),
+  stock: z.number().min(0, { message: 'Stock cannot be negative' }),
+});
+
 export const createProductSchema = z.object({
   name: z.string().min(2, {
     message: 'Бүтээгдэхүүний нэр хамгийн багадаа 2 тэмдэгт байх ёстой.',
@@ -26,17 +31,19 @@ export const createProductSchema = z.object({
   categoryId: z.string({
     required_error: 'Ангилал сонгоно уу.',
   }),
+
   description: z.string().max(100).optional(),
   price: z.number().min(0, {
     message: 'Үнэ нь эерэг тоо байх ёстой.',
   }),
   discount: z.number().min(0).max(100).optional(),
-  sizes: z.array(z.string()).min(1, {
+  sizes: z.array(productSizeSchema).min(1, {
     message: 'Дор хаяж нэг хэмжээ сонгоно уу.',
   }),
   images: z.array(z.string()).min(1, {
     message: 'Дор хаяж нэг зураг оруулна уу.',
   }),
+  colors: z.array(z.string()).optional(),
 });
 
 export const deleteProductSchema = z.object({
@@ -48,3 +55,4 @@ export const updateProductSchema = createProductSchema.extend({
 });
 
 export type ProductFormValues = z.infer<typeof createProductSchema>;
+export type ProductSize = z.infer<typeof productSizeSchema>;

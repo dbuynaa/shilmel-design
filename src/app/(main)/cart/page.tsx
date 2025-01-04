@@ -5,6 +5,9 @@ import { CartSummary } from '@/components/cart/cart-summary';
 import { ProductCard } from '@/components/product-card';
 import { api } from '@/trpc/react';
 import { useCallback } from 'react';
+import { groupBy } from '@/lib/utils';
+import { CustomCartItem } from '@/components/cart/custom-cart-item';
+import type { CustomizationType } from '@/types';
 
 export default function CartPage() {
   const { data: cart, refetch: refetchCart } = api.cart.get.useQuery();
@@ -35,10 +38,17 @@ export default function CartPage() {
     [updateQuantity],
   );
 
-  const totalItems = cart?.items.length ?? 0;
+  // Group cart items by product ID
+  const groupedItems = cart?.items
+    ? groupBy(cart.items, (item) => item.productId ?? '')
+    : {};
+
+  const totalItems =
+    cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+
   const totalPrice =
     cart?.items.reduce(
-      (sum, item) => sum + item.product.price * item.quantity,
+      (sum, item) => sum + (item.product?.price ?? 0) * item.quantity,
       0,
     ) ?? 0;
 
@@ -52,22 +62,57 @@ export default function CartPage() {
           <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
             <div className="divide-y">
               {cart?.items.map((item) => (
-                <CartItem
+                <CustomCartItem
                   key={item.id}
                   id={item.id}
-                  title={item.product.name}
-                  price={item.product.price}
-                  image={item.product.images[0] ?? '/placeholder.svg'}
-                  quantity={item.quantity}
-                  size={item.size}
-                  isSelected={true}
-                  onUpdateQuantity={(quantity) =>
-                    handleUpdateQuantity(item.id, quantity)
-                  }
+                  title={'Custom Product'}
+                  price={item.product?.price ?? 0}
+                  customization={item.customization as CustomizationType}
                   onRemove={() => handleRemoveItem(item.id)}
-                  onToggleSelect={() => {}}
                 />
               ))}
+              {Object.entries(groupedItems).map(([productId, items]) => {
+                const product = items[0]?.product;
+                if (!product) return null;
+
+                return (
+                  <div key={productId} className="py-6">
+                    <div className="mb-4 flex items-center gap-4">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={product.images[0] ?? '/placeholder.svg'}
+                        alt={product.name}
+                        className="h-24 w-24 rounded-lg object-cover"
+                      />
+                      <div>
+                        <h3 className="font-medium">{product.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {product.price.toLocaleString()}₮
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {items.map((item) => (
+                        <CartItem
+                          key={item.id}
+                          id={item.id}
+                          title={product.name}
+                          price={product.price}
+                          image={product.images[0] ?? '/placeholder.svg'}
+                          quantity={item.quantity}
+                          size={item.size}
+                          color={item.color as { primary: string }}
+                          onUpdateQuantity={(quantity) =>
+                            handleUpdateQuantity(item.id, quantity)
+                          }
+                          onRemove={() => handleRemoveItem(item.id)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             <CartSummary totalItems={totalItems} totalPrice={totalPrice} />
           </div>

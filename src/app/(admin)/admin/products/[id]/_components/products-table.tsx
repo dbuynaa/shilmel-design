@@ -100,7 +100,8 @@ export function ProductsTable({
             </TableCell>
             <TableCell>{product.name}</TableCell>
             <TableCell>{product.price.toLocaleString()}₮</TableCell>
-            <TableCell>{product.sizes}</TableCell>
+            <TableCell>{''}</TableCell>
+            {/* <TableCell>{product.sizes.map((size) => (size.))}</TableCell> */}
             <TableCell className="space-x-2">
               <Button variant="outline" size="icon" asChild>
                 <Link href={`/admin/products/${product.id}`}>

@@ -30,6 +30,7 @@ import { createProductSchema, type ProductFormValues } from '@/lib/schemas';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { api } from '@/trpc/react';
+import { ProductLightbox } from './_components/product-lightbox';
 
 const SIZES = ['4XL', '3XL', 'XXL', 'XL', 'L', 'M', 'S'];
 
@@ -41,6 +42,7 @@ export default function ProductForm({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const { data: categories } = api.category.getAll.useQuery();
   const utils = api.useUtils();
   const resolvedParams = use(params);
@@ -58,6 +60,7 @@ export default function ProductForm({
       price: 0,
       discount: 0,
       sizes: [],
+      colors: [],
       images: [],
     },
   });
@@ -71,9 +74,11 @@ export default function ProductForm({
         discount: product.discount || 0,
         sizes: product.sizes,
         categoryId: product.categoryId,
+        colors: product.colors,
         images: product.images,
       });
       setSelectedImages(product.images);
+      setSelectedColors(product.colors);
     }
   }, [product, form, isEditMode]);
 
@@ -153,7 +158,56 @@ export default function ProductForm({
       setIsLoading(false);
     }
   };
+  const handleColorImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const files = e.target.files;
+    if (!files?.length) return;
 
+    try {
+      setIsLoading(true);
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(
+          `/api/upload?filename=${encodeURIComponent(file.name)}`,
+          {
+            method: 'POST',
+            body: file,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to upload image');
+        }
+
+        const data = await response.json();
+        return data.url;
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+      setSelectedColors((prev) => [...prev, ...uploadedUrls]);
+      form.setValue('colors', [
+        ...(form.getValues('colors') || []),
+        ...uploadedUrls,
+      ]);
+
+      toast({
+        title: 'Success',
+        description: 'Color images uploaded successfully',
+      });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to upload color images',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const handleRemoveImage = (index: number) => {
     setSelectedImages((prev) => prev.filter((_, i) => i !== index));
     form.setValue(
@@ -161,9 +215,15 @@ export default function ProductForm({
       form.getValues('images').filter((_, i) => i !== index),
     );
   };
-
+  const handleRemoveColor = (index: number) => {
+    setSelectedColors((prev) => prev.filter((_, i) => i !== index));
+    form.setValue(
+      'colors',
+      (form.getValues('colors') || []).filter((_, i) => i !== index),
+    );
+  };
   return (
-    <div className="container max-w-3xl py-10">
+    <div className="container py-10">
       <div className="mb-8">
         <Link
           href="/admin/products"
@@ -179,86 +239,21 @@ export default function ProductForm({
       </h1>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Бүтээгдэхүүний нэр</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Бүтээгдэхүүний нэрийг оруулна уу"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="categoryId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ангилал</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Ангилал сонгох" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {categories?.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Тайлбар</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Бүтээгдэхүүний тайлбар"
-                    className="resize-none"
-                    {...field}
-                  />
-                </FormControl>
-                <div className="text-xs text-muted-foreground">
-                  {field.value?.length || 0}/100
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid gap-4 md:grid-cols-2">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="grid w-full gap-4 md:grid-cols-3"
+        >
+          <div className="space-y-8 md:col-span-2">
             <FormField
               control={form.control}
-              name="price"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Үнэ</FormLabel>
+                  <FormLabel>Бүтээгдэхүүний нэр</FormLabel>
                   <FormControl>
                     <Input
-                      type="number"
-                      min={0}
+                      placeholder="Бүтээгдэхүүний нэрийг оруулна уу"
                       {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
                     />
                   </FormControl>
                   <FormMessage />
@@ -268,135 +263,250 @@ export default function ProductForm({
 
             <FormField
               control={form.control}
-              name="discount"
+              name="categoryId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Хямдрал (%)</FormLabel>
+                  <FormLabel>Ангилал</FormLabel>
                   <Select
-                    onValueChange={(value) => field.onChange(Number(value))}
-                    defaultValue={String(field.value)}
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Хямдрал сонгох" />
+                        <SelectValue placeholder="Ангилал сонгох" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50].map(
-                        (value) => (
-                          <SelectItem key={value} value={String(value)}>
-                            {value}%
-                          </SelectItem>
-                        ),
-                      )}
+                      {categories?.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </div>
 
-          <FormField
-            control={form.control}
-            name="sizes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Боломжит хэмжээнүүд</FormLabel>
-                <div className="flex flex-wrap gap-2">
-                  {SIZES.map((size) => (
-                    <Button
-                      type="button"
-                      key={size}
-                      variant={
-                        field.value?.includes(size) ? 'default' : 'outline'
-                      }
-                      className="w-16"
-                      onClick={() => {
-                        const current = new Set(field.value);
-                        if (current.has(size)) {
-                          current.delete(size);
-                        } else {
-                          current.add(size);
-                        }
-                        field.onChange(Array.from(current));
-                      }}
-                    >
-                      {size}
-                    </Button>
-                  ))}
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="images"
-            render={({}) => (
-              <FormItem>
-                <FormLabel>Бүтээгдэхүүний зураг</FormLabel>
-                <div className="grid grid-cols-5 gap-4">
-                  {selectedImages.map((image, index) => (
-                    <div
-                      key={index}
-                      className="group relative aspect-square rounded-lg border bg-muted"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={image}
-                        alt={`Бүтээгдэхүүн ${index + 1}`}
-                        className="h-full w-full rounded-lg object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveImage(index)}
-                        className="absolute right-1 top-1 hidden rounded-full bg-destructive p-1 text-white group-hover:block"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Тайлбар</FormLabel>
                   <FormControl>
-                    <div className="relative aspect-square">
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        onChange={handleImageUpload}
-                        id="image-upload"
-                        disabled={isLoading}
-                      />
-                      <label
-                        htmlFor="image-upload"
-                        className={cn(
-                          'flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed',
-                          'hover:bg-muted/50',
-                          isLoading && 'cursor-not-allowed opacity-50',
-                        )}
-                      >
-                        {isLoading ? (
-                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                        ) : (
-                          <>
-                            <Plus className="h-8 w-8 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">
-                              Зураг нэмэх
-                            </span>
-                          </>
-                        )}
-                      </label>
-                    </div>
+                    <Textarea
+                      placeholder="Бүтээгдэхүүний тайлбар"
+                      className="resize-none"
+                      {...field}
+                    />
                   </FormControl>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <div className="text-xs text-muted-foreground">
+                    {field.value?.length || 0}/100
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <div className="flex justify-end space-x-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Үнэ</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="discount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Хямдрал (%)</FormLabel>
+                    <Select
+                      onValueChange={(value) => field.onChange(Number(value))}
+                      defaultValue={String(field.value)}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Хямдрал сонгох" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50].map(
+                          (value) => (
+                            <SelectItem key={value} value={String(value)}>
+                              {value}%
+                            </SelectItem>
+                          ),
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="sizes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Боломжит хэмжээнүүд</FormLabel>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {SIZES.map((size) => {
+                      const sizeEntry = field.value?.find(
+                        (s) => s.size === size,
+                      );
+                      return (
+                        <div key={size} className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant={sizeEntry ? 'default' : 'outline'}
+                            className="w-16"
+                            onClick={() => {
+                              const current = [...field.value];
+                              const index = current.findIndex(
+                                (s) => s.size === size,
+                              );
+                              if (index !== -1) {
+                                current.splice(index, 1);
+                              } else {
+                                current.push({ size, stock: 0 });
+                              }
+                              field.onChange(current);
+                            }}
+                          >
+                            {size}
+                          </Button>
+                          {sizeEntry && (
+                            <Input
+                              type="number"
+                              min={0}
+                              value={sizeEntry.stock}
+                              onChange={(e) => {
+                                const current = [...field.value];
+                                const index = current.findIndex(
+                                  (s) => s.size === size,
+                                );
+                                if (index !== -1) {
+                                  current[index] = {
+                                    size: current[index]?.size || '',
+                                    stock: parseInt(e.target.value) || 0,
+                                  };
+                                  field.onChange(current);
+                                }
+                              }}
+                              className="w-24"
+                              placeholder="Stock"
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="colors"
+              render={({}) => (
+                <FormItem>
+                  <FormLabel>Өнгө нэмэх</FormLabel>
+                  <div className="grid grid-cols-5 gap-4">
+                    {selectedColors.map((image, index) => (
+                      <div
+                        key={index}
+                        className="group relative aspect-square rounded-lg border bg-muted"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={image}
+                          alt={`Бүтээгдэхүүн ${index + 1}`}
+                          className="h-full w-full rounded-lg object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveColor(index)}
+                          className="absolute right-1 top-1 hidden rounded-full bg-destructive p-1 text-white group-hover:block"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                    <FormControl>
+                      <div className="relative aspect-square">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={handleColorImageUpload}
+                          id="color-upload"
+                          disabled={isLoading}
+                        />
+                        <label
+                          htmlFor="color-upload"
+                          className={cn(
+                            'flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed',
+                            'hover:bg-muted/50',
+                            isLoading && 'cursor-not-allowed opacity-50',
+                          )}
+                        >
+                          {isLoading ? (
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                          ) : (
+                            <>
+                              <Plus className="h-8 w-8 text-muted-foreground" />
+                            </>
+                          )}
+                        </label>
+                      </div>
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="space-y-8">
+            <FormField
+              control={form.control}
+              name="images"
+              render={({}) => (
+                <FormItem>
+                  <FormLabel>Бүтээгдэхүүний зураг</FormLabel>
+                  <FormControl>
+                    <ProductLightbox
+                      handleRemoveImage={handleRemoveImage}
+                      handleImageUpload={handleImageUpload}
+                      images={selectedImages}
+                      colors={selectedColors}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="flex justify-start space-x-4">
             <Button
               type="button"
               variant="outline"

@@ -80,7 +80,7 @@ export function ProductImageGallery({
           </button>
         ))}
       </div>
-      <div className="relative aspect-square flex-1">
+      <div className="relative aspect-square flex-1 overflow-hidden">
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted">
             Loading...

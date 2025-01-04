@@ -14,7 +14,7 @@ export default function Home() {
   });
 
   return (
-    <div className="bg-pink-50/30">
+    <div className="w-full bg-pink-50/30">
       <HeroSection />
       <CategoryNav />
 

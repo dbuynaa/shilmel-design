@@ -41,7 +41,7 @@ export function OrdersTable({ orders, isLoading }: OrdersTableProps) {
             <TableCell>{order.orderedBy.name}</TableCell>
             <TableCell>{formatDate(order.createdAt, 'yyyy-MM-dd')}</TableCell>
             <TableCell>{order.status}</TableCell>
-            <TableCell>{order.shippingInfo?.toString()}</TableCell>
+            <TableCell>{order.paymentStatus}</TableCell>
             <TableCell className="text-right">
               {order.totalAmount.toLocaleString()}₮
             </TableCell>

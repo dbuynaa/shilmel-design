@@ -4,6 +4,8 @@ import {
   categoryRouter,
   orderRouter,
   productRouter,
+  workBranchRouter, // Add this line
+  customOrderRouter, // Add this line
 } from './routers';
 
 /**
@@ -16,6 +18,8 @@ export const appRouter = createTRPCRouter({
   order: orderRouter,
   cart: cartRouter,
   category: categoryRouter,
+  workBranch: workBranchRouter, // Add this line
+  customOrder: customOrderRouter, // Add this line
 });
 
 // export type definition of API

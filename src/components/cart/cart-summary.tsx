@@ -17,7 +17,8 @@ export function CartSummary({ totalItems, totalPrice }: CartSummaryProps) {
 
   const createOrder = api.order.create.useMutation({
     onSuccess: () => {
-      router.refresh();
+      setIsLoading(false);
+      router.push(`/`);
     },
     onError: (error) => {
       toast({
@@ -31,20 +32,9 @@ export function CartSummary({ totalItems, totalPrice }: CartSummaryProps) {
 
   const handleCheckout = (paymentMethod: 'card' | 'qpay') => {
     setIsLoading(true);
-    console.log('Checkout with:', paymentMethod);
-    try {
-      // Create order first
-      createOrder.mutate({
-        shippingInfo: {
-          address: '', // These will be collected on the checkout page
-          city: '',
-          phone: '',
-        },
-      });
-    } catch (error) {
-      setIsLoading(false);
-      console.error('Checkout error:', error);
-    }
+    createOrder.mutate({
+      paymentMethod,
+    });
   };
 
   return (
@@ -58,7 +48,7 @@ export function CartSummary({ totalItems, totalPrice }: CartSummaryProps) {
         <Button
           className="w-full"
           onClick={() => handleCheckout('card')}
-          disabled={isLoading}
+          disabled={isLoading || totalItems === 0}
         >
           Картаар төлөх
         </Button>
@@ -66,19 +56,9 @@ export function CartSummary({ totalItems, totalPrice }: CartSummaryProps) {
           variant="outline"
           className="w-full"
           onClick={() => handleCheckout('qpay')}
-          disabled={isLoading}
+          disabled={isLoading || totalItems === 0}
         >
           QPay-ээр төлөх
-        </Button>
-      </div>
-      <div className="mt-4 text-center">
-        <Button
-          variant="link"
-          className="text-sm text-muted-foreground"
-          onClick={() => router.push('/bonus')}
-          disabled={isLoading}
-        >
-          Бонус оноогоор хөнгөлөх
         </Button>
       </div>
     </div>
