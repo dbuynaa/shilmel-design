@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { useParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
+import Link from 'next/link';
 
 export default function ProductPage() {
   const params = useParams<{ id: string }>();
@@ -182,13 +183,23 @@ export default function ProductPage() {
           </div>
 
           <div className="flex gap-4">
-            <Button
-              className="flex-1"
-              onClick={handleAddToCart}
-              disabled={addToCart.isPending}
-            >
-              {addToCart.isPending ? 'Нэмж байна...' : 'Сагсанд нэмэх'}
-            </Button>
+            <div className="flex flex-1 flex-row gap-2">
+              <Button
+                className="flex-1"
+                onClick={handleAddToCart}
+                disabled={addToCart.isPending}
+              >
+                {addToCart.isPending ? 'Нэмж байна...' : 'Сагсанд нэмэх'}
+              </Button>
+              <Button
+                className="flex-1 bg-stone-900 text-white hover:bg-stone-800"
+                disabled={addToCart.isPending}
+              >
+                <Link href={`/products/${product.id}/logo-submission`}>
+                  Лого тохируулах
+                </Link>
+              </Button>
+            </div>
             <Button variant="outline" size="icon">
               <Heart className="h-4 w-4" />
             </Button>
