@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { OrdersTable } from './orders-table';
+import { CustomOrdersTable } from './orders-table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -23,11 +23,7 @@ export default function OrdersPage() {
     'ALL',
   );
 
-  const { data, isLoading } = api.order.getAllOrders.useQuery({
-    status,
-    search,
-    paymentStatus,
-  });
+  const { data, isLoading } = api.customOrder.getAll.useQuery();
 
   return (
     <div className="space-y-6 p-6">
@@ -71,23 +67,23 @@ export default function OrdersPage() {
           <TabsTrigger value={''} className="relative">
             Бүгд
             <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-sm font-medium">
-              {data?.count ?? 0}
+              {/* {data?.count ?? 0} */}1
             </span>
           </TabsTrigger>
           <TabsTrigger value={OrderStatus.DELIVERED} className="relative">
             Биелсэн
             <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-sm font-medium">
-              {data?.count ?? 0}
+              {/* {data?.count ?? 0} */}1
             </span>
           </TabsTrigger>
           <TabsTrigger value={OrderStatus.CANCELLED} className="relative">
             Цуцалсан
             <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-sm font-medium">
-              {data?.count ?? 0}
+              {/* {data?.count ?? 0} */}1
             </span>
           </TabsTrigger>
         </TabsList>
-        <OrdersTable orders={data?.orders ?? []} isLoading={isLoading} />
+        <CustomOrdersTable orders={data ?? []} isLoading={isLoading} />
       </Tabs>
     </div>
   );

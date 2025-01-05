@@ -61,6 +61,8 @@ export const customOrderRouter = createTRPCRouter({
     return ctx.db.customOrder.findMany({
       where: { userId: ctx.session.user.id },
       include: {
+        orderedBy: true,
+        sizes: true,
         workBranch: true,
       },
       orderBy: { createdAt: 'desc' },
@@ -73,8 +75,14 @@ export const customOrderRouter = createTRPCRouter({
       const order = await ctx.db.customOrder.findUnique({
         where: { id: input },
         include: {
-          workBranch: true,
+          sizes: true,
+          workBranch: {
+            include: {
+              children: true,
+            },
+          },
           orderedBy: true,
+          category: true,
         },
       });
 

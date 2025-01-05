@@ -138,6 +138,7 @@ export const cartRouter = createTRPCRouter({
           notes: input.notes,
           workBranchId: input.workBranchId,
           categoryId: input.categoryId,
+          logoFile: input.logo,
           sizes: {
             create: Object.entries(input.sizes).map(([size, quantity]) => ({
               size,

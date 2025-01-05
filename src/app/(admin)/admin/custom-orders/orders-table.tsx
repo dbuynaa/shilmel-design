@@ -9,15 +9,18 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDate } from 'date-fns';
 import { RouterOutputs } from '@/trpc/react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { ArrowRightCircle } from 'lucide-react';
 
-type Order = RouterOutputs['order']['getAllOrders']['orders'][0];
+type Order = RouterOutputs['customOrder']['getAll'][0];
 
 interface OrdersTableProps {
   orders: Order[];
   isLoading: boolean;
 }
 
-export function OrdersTable({ orders, isLoading }: OrdersTableProps) {
+export function CustomOrdersTable({ orders, isLoading }: OrdersTableProps) {
   if (isLoading) {
     return <LoadingSkeleton />;
   }
@@ -30,7 +33,7 @@ export function OrdersTable({ orders, isLoading }: OrdersTableProps) {
           <TableHead>Захиалагч</TableHead>
           <TableHead>Огноо</TableHead>
           <TableHead>Төлөв</TableHead>
-          <TableHead>Төлбөр</TableHead>
+          <TableHead>Тоо хэмжээ</TableHead>
           <TableHead className="text-right">Дүн</TableHead>
         </TableRow>
       </TableHeader>
@@ -41,9 +44,20 @@ export function OrdersTable({ orders, isLoading }: OrdersTableProps) {
             <TableCell>{order.orderedBy.name}</TableCell>
             <TableCell>{formatDate(order.createdAt, 'yyyy-MM-dd')}</TableCell>
             <TableCell>{order.status}</TableCell>
-            <TableCell>{order.paymentStatus}</TableCell>
+            <TableCell>
+              {order.sizes
+                .map((size) => `${size.size}: ${size.quantity}`)
+                .join(', ')}
+            </TableCell>
             <TableCell className="text-right">
               {order.totalAmount.toLocaleString()}₮
+            </TableCell>
+            <TableCell>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Link href={`/admin/custom-orders/${order.id}`}>
+                  <ArrowRightCircle className="h-8 w-8" />
+                </Link>
+              </Button>
             </TableCell>
           </TableRow>
         ))}

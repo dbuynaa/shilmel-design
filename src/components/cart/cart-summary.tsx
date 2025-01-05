@@ -2,16 +2,24 @@
 
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import { api } from '@/trpc/react';
+import { api, RouterOutputs } from '@/trpc/react';
 import { toast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+// import { Cart } from '@prisma/client';
+
+type Cart = RouterOutputs['cart']['get'];
 
 interface CartSummaryProps {
+  cart: Cart | undefined;
   totalItems: number;
   totalPrice: number;
 }
 
-export function CartSummary({ totalItems, totalPrice }: CartSummaryProps) {
+export function CartSummary({
+  totalItems,
+  totalPrice,
+  cart,
+}: CartSummaryProps) {
   const router = useRouter();
   const [status, setStatus] = useState('PENDING');
   const [isLoading, setIsLoading] = useState(false);
@@ -57,16 +65,23 @@ export function CartSummary({ totalItems, totalPrice }: CartSummaryProps) {
   const handleCheckout = (paymentMethod: 'card' | 'qpay') => {
     setIsLoading(true);
     setStatus('PENDING');
-    createCustomOrder.mutate();
-    createOrder.mutate({
-      paymentMethod,
-    });
+    if (!cart) return;
+
+    if (cart?.customCartItems.length > 0) {
+      createCustomOrder.mutate();
+    }
+
+    if (cart?.items.length > 0) {
+      createOrder.mutate({
+        paymentMethod,
+      });
+    }
 
     setTimeout(() => {
       if (status === 'PENDING') {
         setStatus('COMPLETED');
-        router.refresh();
       }
+      router.refresh();
     }, 3000);
   };
 

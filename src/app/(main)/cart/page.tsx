@@ -43,13 +43,16 @@ export default function CartPage() {
     : {};
 
   const totalItems =
-    cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+    (cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0) +
+    (cart?.customCartItems?.length ?? 0);
 
   const totalPrice =
-    cart?.items.reduce(
+    (cart?.items.reduce(
       (sum, item) => sum + (item.product?.price ?? 0) * item.quantity,
       0,
-    ) ?? 0;
+    ) ?? 0) +
+    (cart?.customCartItems?.reduce((sum, item) => sum + item.totalAmount, 0) ??
+      0);
 
   return (
     <div className="flex min-h-screen flex-col px-[12%]">
@@ -111,7 +114,11 @@ export default function CartPage() {
                 );
               })}
             </div>
-            <CartSummary totalItems={totalItems} totalPrice={totalPrice} />
+            <CartSummary
+              cart={cart}
+              totalItems={totalItems}
+              totalPrice={totalPrice}
+            />
           </div>
           <div className="mt-16 space-y-4">
             <h2 className="text-2xl font-bold">Санал болгох</h2>
