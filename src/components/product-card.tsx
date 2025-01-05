@@ -48,7 +48,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <h3 className="line-clamp-2 text-sm font-medium">{product.title}</h3>
         <div className="flex w-full items-center justify-between">
           <p className="font-semibold">{product.price.toLocaleString()}₮</p>
-          <Button
+          {/* <Button
             size="sm"
             variant="secondary"
             onClick={(e) => {
@@ -56,7 +56,7 @@ export function ProductCard({ product }: ProductCardProps) {
             }}
           >
             Сагсанд нэмэх
-          </Button>
+          </Button> */}
         </div>
       </CardFooter>
     </Card>

@@ -189,6 +189,50 @@ export const orderRouter = createTRPCRouter({
       };
     }),
 
+  getAllCustomOrders: adminProcedure
+    .input(
+      z.object({
+        status: z.nativeEnum(OrderStatus).optional(),
+        search: z.string().optional(),
+        paymentStatus: z.enum(['ALL', 'PAID', 'UNPAID']).optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const where = {
+        ...(input.status ? { status: input.status as OrderStatus } : {}),
+        ...(input.search
+          ? {
+              OR: [
+                { id: { contains: input.search } },
+                { user: { name: { contains: input.search } } },
+              ],
+            }
+          : {}),
+        ...(input.paymentStatus && input.paymentStatus !== 'ALL'
+          ? { paymentStatus: input.paymentStatus }
+          : {}),
+      };
+
+      const [orders, count] = await Promise.all([
+        ctx.db.customOrder.findMany({
+          where,
+          include: {
+            orderedBy: true,
+            sizes: true,
+            category: true,
+            workBranch: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+        ctx.db.customOrder.count({ where }),
+      ]);
+
+      return {
+        orders,
+        count,
+      };
+    }),
+
   updatePaymentStatus: protectedProcedure
     .input(
       z.object({

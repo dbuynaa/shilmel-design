@@ -1,27 +1,11 @@
-'use client';
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MapPin, Clock } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { api } from '@/trpc/react';
-import { useParams } from 'next/navigation';
-import { OrderStatusProgress } from '@/components/order-status-progress';
 
 export default function OrderDetailPage() {
-  const { id } = useParams();
-  const { data: order, isLoading } = api.order.getById.useQuery(id as string);
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!order) {
-    return <div>Order not found</div>;
-  }
-
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center gap-4">
@@ -31,12 +15,12 @@ export default function OrderDetailPage() {
           </Link>
         </Button>
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-semibold">#{order.id}</h1>
+          <h1 className="text-2xl font-semibold">#01-2002</h1>
           <Badge variant="secondary" className="bg-green-50 text-green-700">
-            {order.paymentStatus}
+            Төлсөн
           </Badge>
           <Badge variant="secondary" className="bg-blue-50 text-blue-700">
-            {order.status}
+            Хийгдэж байна
           </Badge>
         </div>
       </div>
@@ -48,7 +32,66 @@ export default function OrderDetailPage() {
               <CardTitle>Төлөв</CardTitle>
             </CardHeader>
             <CardContent>
-              <OrderStatusProgress status={order.status} />
+              <div className="flex items-center">
+                <div className="flex w-full items-center">
+                  <div className="flex flex-col items-center">
+                    <div className="rounded-full bg-green-500 p-2">
+                      <svg
+                        className="h-4 w-4 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <div className="mt-2 text-sm">Захиалга авсан</div>
+                  </div>
+                  <div className="h-1 flex-1 bg-green-500"></div>
+                  <div className="flex flex-col items-center">
+                    <div className="rounded-full bg-green-500 p-2">
+                      <svg
+                        className="h-4 w-4 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <div className="mt-2 text-sm">Хүргэлтэд гарсан</div>
+                  </div>
+                  <div className="h-1 flex-1 bg-gray-200"></div>
+                  <div className="flex flex-col items-center">
+                    <div className="rounded-full bg-gray-200 p-2">
+                      <svg
+                        className="h-4 w-4 text-gray-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <div className="mt-2 text-sm">Хүргэгдсэн</div>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -58,28 +101,26 @@ export default function OrderDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {order.items.map((item) => (
-                  <div key={item.id} className="flex items-center gap-4">
+                {[1, 2, 3].map((item) => (
+                  <div key={item} className="flex items-center gap-4">
                     <Image
-                      src={item.product.images[0] || '/placeholder.svg'}
-                      alt={item.product.name}
+                      src="/placeholder.svg"
+                      alt="Product"
                       width={80}
                       height={80}
                       className="rounded-lg"
                     />
                     <div className="flex-1">
-                      <h3 className="font-medium">{item.product.name}</h3>
+                      <h3 className="font-medium">
+                        Waterproof Grey Jacket xcxbcncx...
+                      </h3>
                       <p className="text-sm text-muted-foreground">
-                        {order.status}
+                        Бэлэн болсон
                       </p>
                     </div>
                     <div className="text-right">
-                      <div className="font-medium">
-                        {item.price.toLocaleString()}₮
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        x{item.quantity}
-                      </div>
+                      <div className="font-medium">22,900₮</div>
+                      <div className="text-sm text-muted-foreground">x2</div>
                     </div>
                   </div>
                 ))}
@@ -96,17 +137,17 @@ export default function OrderDetailPage() {
             <CardContent className="space-y-4">
               <div>
                 <div className="text-sm text-muted-foreground">Нэр</div>
-                <div>{order.orderedBy.name}</div>
+                <div>Х. Санаа</div>
               </div>
               <div>
                 <div className="text-sm text-muted-foreground">Имэйл</div>
-                <div>{order.orderedBy.email}</div>
+                <div>saikhnbayar@gmail.com</div>
               </div>
               <div>
                 <div className="text-sm text-muted-foreground">
                   Утасны дугаар
                 </div>
-                {/* <div>{order.orderedBy.email}</div> */}
+                <div>99008800</div>
               </div>
             </CardContent>
           </Card>
@@ -121,7 +162,6 @@ export default function OrderDetailPage() {
                 <div>
                   <div className="font-medium">Хүргэлтийн хаяг</div>
                   <div className="text-sm text-muted-foreground">
-                    {/* {order.shippingAddress} */}
                     Баянзүрх дүүрэг, 25-р хороо, Сэлбэ хотхон, 99/1
                   </div>
                 </div>
@@ -131,10 +171,8 @@ export default function OrderDetailPage() {
                 <div>
                   <div className="font-medium">Хүлээн авах</div>
                   <div className="text-sm text-muted-foreground">
-                    {/* {order.deliveryDate} */}
                     12-р сарын 27
                     <br />
-                    {/* {order.deliveryTime} */}
                     13:00 - 14:00
                   </div>
                 </div>
@@ -148,20 +186,16 @@ export default function OrderDetailPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex justify-between">
-                <div className="text-muted-foreground">
-                  {order.items.length} бараааны дүн
-                </div>
-                <div>{order.totalAmount.toLocaleString()}₮</div>
+                <div className="text-muted-foreground">24 бараааны дүн</div>
+                <div>525,900₮</div>
               </div>
               <div className="flex justify-between">
                 <div className="text-muted-foreground">Хүргэлт</div>
-                <div>{5000}₮</div>
+                <div>5000₮</div>
               </div>
               <div className="flex justify-between font-medium">
                 <div>Нийт</div>
-                <div className="text-pink-600">
-                  {order.totalAmount.toLocaleString()}₮
-                </div>
+                <div className="text-pink-600">525,900₮</div>
               </div>
             </CardContent>
           </Card>

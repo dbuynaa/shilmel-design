@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   BarChart3,
   Package,
@@ -8,6 +9,7 @@ import {
   Scissors,
   ShoppingCart,
   Search,
+  Shirt,
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
@@ -15,6 +17,17 @@ import { Input } from '@/components/ui/input';
 
 export function Sidebar() {
   const { data: session } = useSession();
+  const pathname = usePathname();
+
+  const navItems = [
+    { href: '/admin/dashboard', icon: BarChart3, label: 'Нүүр хуудас' },
+    { href: '/admin/orders', icon: ShoppingCart, label: 'Захиалгууд' },
+    { href: '/admin/custom-orders', icon: Shirt, label: 'Шинэ Захиалгууд' },
+    { href: '/admin/products', icon: Package, label: 'Бүтээгдэхүүн' },
+    { href: '/admin/reports', icon: Scissors, label: 'Тайлан' },
+    { href: '/admin/settings', icon: Settings, label: 'Тохиргоо' },
+  ];
+
   return (
     <div className="min-h-screen w-64 border-r bg-gray-50/50 p-4">
       <div className="mb-8">
@@ -39,41 +52,20 @@ export function Sidebar() {
       </div>
 
       <nav className="space-y-2">
-        <Link
-          href="/admin/dashboard"
-          className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100"
-        >
-          <BarChart3 className="h-5 w-5" />
-          <span>Нүүр хуудас</span>
-        </Link>
-        <Link
-          href="/admin/orders"
-          className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100"
-        >
-          <ShoppingCart className="h-5 w-5" />
-          <span>Захиалгууд</span>
-        </Link>
-        <Link
-          href="/admin/products"
-          className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100"
-        >
-          <Package className="h-5 w-5" />
-          <span>Бүтээгдэхүүн</span>
-        </Link>
-        <Link
-          href="/admin/reports"
-          className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100"
-        >
-          <Scissors className="h-5 w-5" />
-          <span>Тайлан</span>
-        </Link>
-        <Link
-          href="/admin/settings"
-          className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100"
-        >
-          <Settings className="h-5 w-5" />
-          <span>Тохиргоо</span>
-        </Link>
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-colors ${
+              pathname.startsWith(item.href)
+                ? 'bg-primary text-primary-foreground'
+                : 'hover:bg-muted'
+            }`}
+          >
+            <item.icon className="h-5 w-5" />
+            <span>{item.label}</span>
+          </Link>
+        ))}
       </nav>
     </div>
   );
