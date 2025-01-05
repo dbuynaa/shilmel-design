@@ -2,41 +2,56 @@ import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 import { TRPCError } from '@trpc/server';
 
-const colorSchema = z.object({
-  name: z.string(),
-  value: z.string(),
-});
-
-const customOrderSchema = z.object({
-  workBranchId: z.string(),
-  sizes: z.record(z.string(), z.number()),
-  colors: z.array(colorSchema),
-  material: z.enum(['standard', 'premium']),
-  logoPosition: z.string().optional(),
-  logoFile: z.string().optional(),
-  notes: z.string().optional(),
-});
-
 export const customOrderRouter = createTRPCRouter({
   create: protectedProcedure
-    .input(customOrderSchema)
-    .mutation(async ({ ctx, input }) => {
+    // .input(customItemSchema)
+    .mutation(async ({ ctx }) => {
+      const input = await ctx.db.cart.findFirst({
+        where: { userId: ctx.session.user.id },
+        include: {
+          customCartItems: {
+            include: {
+              sizes: true,
+            },
+          },
+        },
+      });
+      if (!input || input.customCartItems.length === 0) {
+        throw new TRPCError({ code: 'NOT_FOUND' });
+      }
+
+      const item = input.customCartItems[0]!;
+
       // Calculate total amount based on sizes
-      const totalQuantity = Object.values(input.sizes).reduce(
-        (a, b) => a + b,
-        0,
-      );
+      const totalQuantity = item.sizes.reduce((a, b) => a + b.quantity, 0);
       const basePrice = 50000; // Base price per item
       const totalAmount = totalQuantity * basePrice;
 
       // Generate order number
       const orderNumber = `CO${Date.now()}`;
 
-      return ctx.db.customOrder.create({
+      // delete custom cart item
+      await ctx.db.customCartItem.delete({
+        where: { id: item.id },
+      });
+
+      return await ctx.db.customOrder.create({
         data: {
           orderNumber,
           totalAmount,
-          ...input,
+          sizes: {
+            create: item.sizes.map((size) => ({
+              size: size.size,
+              quantity: size.quantity,
+            })),
+          },
+          notes: item.notes,
+          color: item.color || '',
+          material: item.material,
+          logoFile: item.logoFile,
+          logoPosition: item.logoPosition,
+          workBranchId: item.workBranchId,
+          categoryId: item.categoryId,
           userId: ctx.session.user.id,
         },
       });

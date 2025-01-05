@@ -35,7 +35,7 @@ export default function Header() {
         </Link>
         <div className="flex items-center gap-6">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/account">Захиалга үүсгэх</Link>
+            <Link href="/custom-order">Захиалга үүсгэх</Link>
           </Button>
           <Link href="/wishlist" className="p-2 hover:text-pink-600">
             <Heart className="h-5 w-5" />

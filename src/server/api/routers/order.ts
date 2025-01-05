@@ -61,15 +61,17 @@ export const orderRouter = createTRPCRouter({
               connect: { id: ctx.session.user.id },
             },
             items: {
-              create: cart.items.map((item) => ({
-                quantity: item.quantity,
-                size: item.size,
-                color: item.color ?? {},
-                price: item.product?.price ?? 0,
-                product: {
-                  connect: { id: item.productId! },
-                },
-              })),
+              create: cart.items
+                .filter((item) => item.product !== null)
+                .map((item) => ({
+                  quantity: item.quantity,
+                  size: item.size,
+                  color: item.color ?? {},
+                  price: item.product?.price ?? 0,
+                  product: {
+                    connect: { id: item.productId! },
+                  },
+                })),
             },
           },
           include: {

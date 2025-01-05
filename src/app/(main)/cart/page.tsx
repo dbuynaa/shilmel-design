@@ -7,7 +7,6 @@ import { api } from '@/trpc/react';
 import { useCallback } from 'react';
 import { groupBy } from '@/lib/utils';
 import { CustomCartItem } from '@/components/cart/custom-cart-item';
-import type { CustomizationType } from '@/types';
 
 export default function CartPage() {
   const { data: cart, refetch: refetchCart } = api.cart.get.useQuery();
@@ -61,13 +60,11 @@ export default function CartPage() {
           </div>
           <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
             <div className="divide-y">
-              {cart?.items.map((item) => (
+              {cart?.customCartItems.map((item) => (
                 <CustomCartItem
                   key={item.id}
-                  id={item.id}
-                  title={'Custom Product'}
-                  price={item.product?.price ?? 0}
-                  customization={item.customization as CustomizationType}
+                  item={item}
+                  sizes={item.sizes}
                   onRemove={() => handleRemoveItem(item.id)}
                 />
               ))}
@@ -102,7 +99,7 @@ export default function CartPage() {
                           image={product.images[0] ?? '/placeholder.svg'}
                           quantity={item.quantity}
                           size={item.size}
-                          color={item.color as { primary: string }}
+                          color={item.color}
                           onUpdateQuantity={(quantity) =>
                             handleUpdateQuantity(item.id, quantity)
                           }

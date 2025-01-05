@@ -54,5 +54,16 @@ export const updateProductSchema = createProductSchema.extend({
   id: z.string(),
 });
 
+export const customItemSchema = z.object({
+  workBranchId: z.string(),
+  categoryId: z.string(),
+  sizes: z.record(z.string(), z.number()),
+  color: z.string(),
+  material: z.enum(['standard', 'premium']),
+  logo: z.string().optional(),
+  logoPosition: z.string().optional(),
+  notes: z.string().optional(),
+});
+
 export type ProductFormValues = z.infer<typeof createProductSchema>;
 export type ProductSize = z.infer<typeof productSizeSchema>;

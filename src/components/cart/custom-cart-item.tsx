@@ -1,46 +1,19 @@
 import { Button } from '@/components/ui/button';
+import { CustomCartItem as ItemType, SizeQuantity } from '@prisma/client';
 import { Trash2 } from 'lucide-react';
 
-interface SizeOption {
-  [key: string]: number;
-}
-
-interface ColorOption {
-  id: string;
-  value: string;
-  name?: string;
-}
-
 interface CustomCartItemProps {
-  id: string;
-  title: string;
-  price: number;
-  customization: {
-    sizes: SizeOption;
-    colors: ColorOption[];
-    material: 'premium' | 'standard';
-    logoPosition?: string;
-    notes?: string;
-  };
+  item: ItemType;
+  sizes: SizeQuantity[];
   onRemove: () => void;
 }
 
-export function CustomCartItem({
-  title,
-  price,
-  customization,
-  onRemove,
-}: CustomCartItemProps) {
-  const totalQuantity = Object.values(customization.sizes).reduce(
-    (a, b) => a + b,
-    0,
-  );
-  const totalPrice = price * totalQuantity;
+export function CustomCartItem({ item, sizes, onRemove }: CustomCartItemProps) {
+  const totalQuantity = sizes.reduce((a, b) => a + b.quantity, 0);
 
-  const renderCustomizationDetail = (
-    label: string,
-    content: React.ReactNode,
-  ) => (
+  const totalPrice = item.totalAmount * totalQuantity;
+
+  const renderItemDetail = (label: string, content: React.ReactNode) => (
     <div className="flex items-center gap-1">
       <span className="font-medium">{label}:</span>
       {content}
@@ -51,44 +24,37 @@ export function CustomCartItem({
     <div className="flex items-start justify-between gap-4 rounded-lg border p-4">
       <div className="flex gap-4">
         <div className="space-y-2">
-          <h4 className="text-lg font-medium">{title}</h4>
+          <h4 className="text-lg font-medium">{item.id}</h4>
           <div className="space-y-1 text-sm">
-            {renderCustomizationDetail(
+            {renderItemDetail(
               'Хэмжээ',
               <span>
-                {Object.entries(customization.sizes)
+                {totalQuantity}
+                {/* {Object.entries(item.sizes)
                   .filter(([, qty]) => qty > 0)
                   .map(([size, qty]) => `${size} (${qty})`)
-                  .join(', ')}
+                  .join(', ')} */}
               </span>,
             )}
-            {renderCustomizationDetail(
+            {renderItemDetail(
               'Өнгө',
               <div className="flex gap-1.5">
-                {customization.colors.map((color) => (
-                  <div
-                    key={color.id}
-                    className="h-5 w-5 rounded-full border shadow"
-                    style={{ backgroundColor: color.value }}
-                    title={color.name || color.value}
-                  />
-                ))}
+                <div
+                  key={item.id}
+                  className="h-5 w-5 rounded-full border shadow"
+                  style={{ backgroundColor: item.color || '' }}
+                />
               </div>,
             )}
-            {renderCustomizationDetail(
+            {renderItemDetail(
               'Материал',
-              <span>
-                {customization.material === 'premium' ? 'Премиум' : 'Энгийн'}
-              </span>,
+              <span>{item.material === 'premium' ? 'Премиум' : 'Энгийн'}</span>,
             )}
-            {customization.logoPosition &&
-              renderCustomizationDetail(
-                'Лого байрлал',
-                customization.logoPosition,
-              )}
-            {customization.notes && (
+            {item.logoPosition &&
+              renderItemDetail('Лого байрлал', item.logoPosition)}
+            {item.notes && (
               <div className="mt-1 text-xs italic text-muted-foreground">
-                Тэмдэглэл: {customization.notes}
+                Тэмдэглэл: {item.notes}
               </div>
             )}
           </div>

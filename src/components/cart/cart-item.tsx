@@ -11,7 +11,7 @@ interface CartItemProps {
   image: string;
   quantity: number;
   size: string;
-  color?: { primary: string };
+  color?: string;
   onUpdateQuantity: (quantity: number) => void;
   onRemove: () => void;
 }
@@ -32,7 +32,7 @@ export function CartItem({
           {color && (
             <div
               className="h-4 w-4 rounded-full border"
-              style={{ backgroundColor: color.primary }}
+              style={{ backgroundColor: color }}
             />
           )}
         </div>

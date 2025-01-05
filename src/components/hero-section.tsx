@@ -17,7 +17,7 @@ export function HeroSection() {
             үзэмжтэй загварыг санал болгож байна
           </p>
           <div className="mt-4">
-            <Link href="/order">
+            <Link href="/custom-order">
               <Button>Захиалах өгөх</Button>
             </Link>
           </div>

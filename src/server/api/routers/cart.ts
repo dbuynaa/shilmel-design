@@ -1,25 +1,17 @@
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
-
-const colorSchema = z.object({
-  id: z.string(),
-  value: z.string(),
-});
-
-const customItemSchema = z.object({
-  workBranchId: z.string(),
-  sizes: z.record(z.string(), z.number()),
-  colors: z.array(colorSchema),
-  material: z.enum(['standard', 'premium']),
-  logoPosition: z.string().optional(),
-  notes: z.string().optional(),
-});
+import { customItemSchema } from '@/lib/schemas';
 
 export const cartRouter = createTRPCRouter({
   get: protectedProcedure.query(async ({ ctx }) => {
     const cart = await ctx.db.cart.findFirst({
       where: { userId: ctx.session.user.id },
       include: {
+        customCartItems: {
+          include: {
+            sizes: true,
+          },
+        },
         items: {
           include: {
             product: true,
@@ -34,6 +26,11 @@ export const cartRouter = createTRPCRouter({
           userId: ctx.session.user.id,
         },
         include: {
+          customCartItems: {
+            include: {
+              sizes: true,
+            },
+          },
           items: {
             include: {
               product: true,
@@ -52,11 +49,7 @@ export const cartRouter = createTRPCRouter({
         productId: z.string(),
         quantity: z.number().min(1),
         size: z.string(),
-        color: z.object({
-          name: z.string(),
-          primary: z.string(),
-          secondary: z.string().optional(),
-        }),
+        color: z.string(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -132,21 +125,25 @@ export const cartRouter = createTRPCRouter({
         });
       }
 
+      const totalAmount = Object.values(input.sizes).reduce((a, b) => a + b, 0);
+
       // Create cart item with custom order details
-      return await ctx.db.cartItem.create({
+      return await ctx.db.customCartItem.create({
         data: {
           cartId: cart.id,
-          quantity: Object.values(input.sizes).reduce((a, b) => a + b, 0),
-          customization: {
-            sizes: input.sizes,
-            colors: input.colors,
-            material: input.material,
-            logoPosition: input.logoPosition,
-            notes: input.notes,
-          },
-          size: [...new Set(Object.keys(input.sizes).map((size) => size))].join(
-            ',',
-          ), // Convert sizes object to string
+          totalAmount: totalAmount,
+          color: input.color,
+          material: input.material,
+          logoPosition: input.logoPosition,
+          notes: input.notes,
+          workBranchId: input.workBranchId,
+          categoryId: input.categoryId,
+          sizes: {
+            create: Object.entries(input.sizes).map(([size, quantity]) => ({
+              size,
+              quantity,
+            })),
+          }, // Convert sizes object to string
         },
       });
     }),

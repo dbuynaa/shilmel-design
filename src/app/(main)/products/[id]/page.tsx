@@ -12,11 +12,7 @@ import { Input } from '@/components/ui/input';
 
 export default function ProductPage() {
   const params = useParams<{ id: string }>();
-  const [selectedColor, setSelectedColor] = useState<{
-    name: string;
-    primary: string;
-    secondary?: string;
-  } | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSizes, setSelectedSizes] = useState<
     Record<string, { quantity: number; stock: number }>
   >({});
@@ -70,10 +66,7 @@ export default function ProductPage() {
         productId: product.id,
         quantity,
         size,
-        color: selectedColor ?? {
-          name: 'default',
-          primary: '#000000',
-        },
+        color: selectedColor!,
       });
     });
   };
@@ -170,19 +163,14 @@ export default function ProductPage() {
                     <button
                       key={index}
                       onClick={() =>
-                        setSelectedColor({
-                          name: `color-${index}`,
-                          primary: color as string,
-                        })
+                        setSelectedColor(selectedColor === color ? null : color)
                       }
                       className={`h-12 w-12 overflow-hidden rounded border ${
-                        selectedColor?.primary === color
-                          ? 'border-2 border-primary'
-                          : ''
+                        selectedColor === color ? 'border-2 border-primary' : ''
                       }`}
                     >
                       <div
-                        style={{ backgroundColor: color as string }}
+                        style={{ backgroundColor: color }}
                         className="h-full w-full"
                       />
                     </button>

@@ -109,16 +109,17 @@ model ProductSize {
 }
 
 model WorkBranch {
-    id           String        @id @default(cuid())
-    name         String
-    description  String?
-    icon         String
-    parentId     String?
-    parent       WorkBranch?   @relation("SubWorkBranches", fields: [parentId], references: [id])
-    children     WorkBranch[]  @relation("SubWorkBranches")
-    createdAt    DateTime      @default(now())
-    updatedAt    DateTime      @updatedAt
-    customOrders CustomOrder[]
+    id             String           @id @default(cuid())
+    name           String
+    description    String?
+    icon           String
+    parentId       String?
+    parent         WorkBranch?      @relation("SubWorkBranches", fields: [parentId], references: [id])
+    children       WorkBranch[]     @relation("SubWorkBranches")
+    createdAt      DateTime         @default(now())
+    updatedAt      DateTime         @updatedAt
+    customOrders   CustomOrder[]
+    customCartItem CustomCartItem[]
 }
 
 model Category {
@@ -126,29 +127,49 @@ model Category {
     name String @unique
     icon String
 
-    products Product[]
+    products        Product[]
+    customOrders    CustomOrder[]
+    customCartItems CustomCartItem[]
 }
 
 model Cart {
-    id        String     @id @default(cuid())
-    userId    String
-    items     CartItem[]
-    createdAt DateTime   @default(now())
-    updatedAt DateTime   @updatedAt
+    id              String           @id @default(cuid())
+    userId          String
+    items           CartItem[]
+    createdAt       DateTime         @default(now())
+    updatedAt       DateTime         @updatedAt
+    customCartItems CustomCartItem[]
 }
 
 model CartItem {
-    id            String   @id @default(cuid())
-    cartId        String
-    productId     String?
-    quantity      Int
-    customization Json? // Add this field for custom order details
-    size          String
-    color         Json? // Changed from String to Json?
-    cart          Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-    product       Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+    id        String   @id @default(cuid())
+    cartId    String
+    productId String?
+    quantity  Int
+    size      String
+    color     String
+    cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+    product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
 
     @@unique([cartId, productId, size, color])
+}
+
+model CustomCartItem {
+    id           String         @id @default(cuid())
+    cartId       String
+    totalAmount  Int
+    sizes        SizeQuantity[]
+    color        String?
+    material     String // "standard" | "premium"
+    logoPosition String?
+    logoFile     String?
+    notes        String?
+
+    category     Category   @relation(fields: [categoryId], references: [id])
+    categoryId   String
+    workBranch   WorkBranch @relation(fields: [workBranchId], references: [id])
+    workBranchId String
+    cart         Cart       @relation(fields: [cartId], references: [id], onDelete: Cascade)
 }
 
 model Order {
@@ -170,7 +191,7 @@ model OrderItem {
     id        String   @id @default(cuid())
     quantity  Int
     size      String
-    color     Json
+    color     String
     price     Int
     order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
     orderId   String
@@ -181,24 +202,37 @@ model OrderItem {
 }
 
 model CustomOrder {
-    id           String      @id @default(cuid())
-    status       OrderStatus @default(PENDING)
-    orderNumber  String      @unique
+    id           String         @id @default(cuid())
+    status       OrderStatus    @default(PENDING)
+    orderNumber  String         @unique
     totalAmount  Int
-    sizes        Json // { "XL": 2, "L": 3 }
-    colors       Json[] // [{ "name": "Blue", "value": "#1e40af" }]
+    sizes        SizeQuantity[]
+    color        String
     material     String // "standard" | "premium"
     logoPosition String?
     logoFile     String?
     notes        String?
-    workBranch   WorkBranch  @relation(fields: [workBranchId], references: [id])
+
+    category     Category   @relation(fields: [categoryId], references: [id])
+    categoryId   String
+    workBranch   WorkBranch @relation(fields: [workBranchId], references: [id])
     workBranchId String
     userId       String
-    orderedBy    User        @relation(fields: [userId], references: [id])
-    createdAt    DateTime    @default(now())
-    updatedAt    DateTime    @updatedAt
+    orderedBy    User       @relation(fields: [userId], references: [id])
+    createdAt    DateTime   @default(now())
+    updatedAt    DateTime   @updatedAt
 
     @@index([orderNumber])
+}
+
+model SizeQuantity {
+    id               String          @id @default(cuid())
+    size             String
+    quantity         Int
+    customOrder      CustomOrder?    @relation(fields: [customOrderId], references: [id])
+    customOrderId    String?
+    customCartItem   CustomCartItem? @relation(fields: [customCartItemId], references: [id])
+    customCartItemId String?
 }
 
 enum OrderStatus {

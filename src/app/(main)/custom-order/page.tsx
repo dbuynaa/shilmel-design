@@ -11,10 +11,12 @@ import { useToast } from '@/hooks/use-toast';
 
 export type OrderFormData = {
   sizes: Record<string, number>;
-  colors: Array<{ id: string; value: string }>; // Updated type
+  color: string; // Changed from colors array to single color
+  secondaryColor?: string; // Optional secondary color
   material: 'standard' | 'premium';
   logoPosition?: string;
   notes?: string;
+  logo?: File;
 };
 
 export default function CustomOrderPage() {
@@ -48,34 +50,46 @@ export default function CustomOrderPage() {
     setStep(3);
   };
 
-  const handleSubmit = (formData: OrderFormData) => {
-    if (!workBranchId) return;
+  const handleSubmit = async (formData: OrderFormData) => {
+    if (!workBranchId || !categoryId) return;
 
-    // Validate total quantity
-    const totalQuantity = Object.values(formData.sizes).reduce(
-      (a, b) => a + b,
-      0,
-    );
-    if (totalQuantity === 0) {
+    try {
+      let logoFile: string | undefined;
+      if (formData.logo) {
+        const response = await fetch(
+          `/api/upload?filename=${encodeURIComponent(formData.logo.name)}`,
+          {
+            method: 'POST',
+            body: formData.logo,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to upload logo');
+        }
+
+        const data = await response.json();
+        logoFile = data.url;
+      }
+
+      createCartItem.mutate({
+        workBranchId,
+        categoryId,
+        sizes: formData.sizes,
+        color: formData.color,
+        material: formData.material,
+        logoPosition: formData.logoPosition,
+        notes: formData.notes,
+        logo: logoFile,
+      });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
       toast({
-        title: 'Please select sizes',
+        title: 'Error',
+        description: 'Failed to upload logo',
         variant: 'destructive',
       });
-      return;
     }
-
-    if (formData.colors.length === 0) {
-      toast({
-        title: 'Please select at least one color',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    createCartItem.mutate({
-      workBranchId,
-      ...formData,
-    });
   };
 
   return (
